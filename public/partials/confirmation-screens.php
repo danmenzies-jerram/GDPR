@@ -28,36 +28,37 @@
 		</footer>
 	</div>
 </div>
-
-<?php if ( isset( $_GET['notify'] ) && $_GET['notify'] ) : ?>
+<?php if ( isset( $_REQUEST['notify'] ) && $_REQUEST['notify'] ) : ?>
 	<?php
 	$title = __( 'Error!', 'gdpr' );
-	if ( isset( $_GET['user-deleted'] ) ) {
+    $text = __( 'There was a problem with your request. Please try again later.', 'gdpr' );
+
+	if ( isset( $_REQUEST['user-deleted'] ) ) {
 		$title = __( 'Your account', 'gdpr' );
-		if ( $_GET['user-deleted'] ) {
+		if ( $_REQUEST['user-deleted'] ) {
 			$text = __( 'Your account has been closed. We are sorry to see you go.', 'gdpr' );
 		} else {
 			$text = __( 'Your request has been received and is being reviewed. You will receive an email when we are done.', 'gdpr' );
 		}
 	}
-	if ( isset( $_GET['email-sent'] ) && $_GET['email-sent'] ) {
+	if ( isset( $_REQUEST['email-sent'] ) && $_REQUEST['email-sent'] ) {
 		$title = __( 'Email confirmation', 'gdpr' );
 		$text  = __( 'We\'ve sent you a confirmation email.', 'gdpr' );
 	}
-	if ( isset( $_GET['user-not-found'] ) && $_GET['user-not-found'] ) {
+	if ( isset( $_REQUEST['user-not-found'] ) && $_REQUEST['user-not-found'] ) {
 		$text = __( 'User not found.', 'gdpr' );
 	}
-	if ( isset( $_GET['cannot-delete'] ) && $_GET['cannot-delete'] ) {
+	if ( isset( $_REQUEST['cannot-delete'] ) && $_REQUEST['cannot-delete'] ) {
 		$text = __( 'We can\'t delete this user.', 'gdpr' );
 	}
-	if ( isset( $_GET['required-information-missing'] ) && $_GET['required-information-missing'] ) {
+	if ( isset( $_REQUEST['required-information-missing'] ) && $_REQUEST['required-information-missing'] ) {
 		$text = __( 'Required information is missing from the form.', 'gdpr' );
 	}
-	if ( isset( $_GET['request-confirmed'] ) && $_GET['request-confirmed'] ) {
+	if ( isset( $_REQUEST['request-confirmed'] ) && $_GET['request-confirmed'] ) {
 		$title = __( 'Request Received', 'gdpr' );
 		$text  = __( 'Your request has been received. We will be in touch soon.', 'gdpr' );
 	}
-	if ( isset( $_GET['error'] ) && $_GET['error'] ) {
+	if ( isset( $_REQUEST['error'] ) && $_REQUEST['error'] ) {
 		$text = __( 'There was a problem with your request. Please try again later.', 'gdpr' );
 	}
 	?>

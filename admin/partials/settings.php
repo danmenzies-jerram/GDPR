@@ -43,15 +43,18 @@
 							<input type="number" name="gdpr_email_limit" id="gdpr_email_limit" value="<?php echo esc_attr( $limit ); ?>">
 						</td>
 					</tr>
-					<tr>
-						<th scope="row">
-							<label for="gdpr_deletion_needs_review"><?php esc_html_e( 'User deletion', 'gdpr' ) ?></label>
-						</th>
-						<td>
-							<?php $needs_review = get_option( 'gdpr_deletion_needs_review', true ); ?>
-							<input type="checkbox" name="<?php echo esc_attr( 'gdpr_deletion_needs_review' ); ?>" id="gdpr_deletion_needs_review" value="1"  <?php checked( $needs_review, true ); ?>><span class="description"><label for="gdpr_deletion_needs_review"><?php esc_html_e( 'Send all deletion requests to the review table.', 'gdpr' ); ?></label></label>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="gdpr_deletion_needs_review"><?php esc_html_e( 'User deletion', 'gdpr' ) ?></label>
+                        </th>
+                        <td>
+                            <?php $needs_review = get_option( 'gdpr_deletion_needs_review', true ); ?>
+                            <input type="checkbox" name="<?php echo esc_attr( 'gdpr_deletion_needs_review' ); ?>" id="gdpr_deletion_needs_review" value="1"  <?php checked( $needs_review, true ); ?>><span class="description"><label for="gdpr_deletion_needs_review"><?php esc_html_e( 'Send all deletion requests to the review table.', 'gdpr' ); ?></label></spab>
+                            <br />
+                            <?php $skip_confirmation = get_option( 'gdpr_deletion_skip_confirmation', false ); ?>
+                            <input type="checkbox" name="<?php echo esc_attr( 'gdpr_deletion_skip_confirmation' ); ?>" id="gdpr_deletion_skip_confirmation" value="1"  <?php checked( $skip_confirmation ); ?>><span class="description"><label for="gdpr_deletion_skip_confirmation"><?php esc_html_e( 'Do NOT send confirmation emails on deletion requests', 'gdpr' ); ?></label></span>
+                        </td>
+                    </tr>
 					<tr>
 						<th scope="row">
 							<label for="gdpr_disable_css"><?php esc_html_e( 'Disable CSS', 'gdpr' ) ?></label>
@@ -66,10 +69,21 @@
 							<label for="gdpr_enable_telemetry_tracker"><?php esc_html_e( 'Enable the Telemetry Tracker', 'gdpr' ) ?></label>
 						</th>
 						<td>
+
 							<?php $enable_telemetry = get_option( 'gdpr_enable_telemetry_tracker', false ); ?>
 							<input type="checkbox" name="<?php echo esc_attr( 'gdpr_enable_telemetry_tracker' ); ?>" id="gdpr_enable_telemetry_tracker" value="1"  <?php checked( $enable_telemetry, true ); ?>><label for="gdpr_enable_telemetry_tracker"><span class="description"><?php esc_html_e( 'Toggles the Telemetry Tracker On/Off. (experimental)', 'gdpr' ); ?></span></label>
 						</td>
 					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="gdpr_slack_notification"><?php esc_html_e( 'Slack Notification Endpoint', 'gdpr' ) ?></label>
+                        </th>
+                        <td>
+                            <?php
+                            $slack_notifications = (defined("GDPR_SLACK_ENDPOINT") ? GDPR_SLACK_ENDPOINT : get_option( 'gdpr_slack_notification', '')); ?>
+                            <input type="url" class="regular-text" name="gdpr_slack_notification" id="gdpr_slack_notification" value="<?php echo esc_attr( $slack_notifications ); ?>" <?php echo (defined("GDPR_SLACK_ENDPOINT") ? 'readonly="readonly"' : '') ?>>
+                        </td>
+                    </tr>
 				</tbody>
 			</table>
 			<h2 class="title"><?php esc_html_e( 'Privacy Center', 'gdpr' ); ?></h2>

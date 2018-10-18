@@ -233,12 +233,34 @@ class GDPR_Requests_Public extends GDPR_Requests {
 		  );
 		}
 
+        /**
+         * Check the request, and take appropriate action
+         */
+        if (($type == "delete") && boolval(get_option("gdpr_deletion_skip_confirmation", false))) {
 
-		if ( GDPR_Email::send(
-			$user->user_email,
-			"{$type}-request",
-			$email_args
-		) ) {
+            /**
+             * If this is a delete request AND we're not sending confirmations,
+             * add the request to the deletion queue
+             */
+            $_GET['type'] = "delete";
+            $_GET['key'] = $key;
+            $_GET['email'] = $user->user_email;
+            GDPR_Requests_Public::request_confirmed(true);
+
+            /** ...and let the user know */
+            wp_safe_redirect(
+                esc_url_raw(
+                    add_query_arg(
+                        array(
+                            'notify'     => 1,
+                            'request-confirmed'     => 1,
+                        ),
+                        wp_get_referer()
+                    )
+                )
+            );
+            exit;
+        } else if (GDPR_Email::send($user->user_email, "{$type}-request", $email_args)) {
 			wp_safe_redirect(
 				esc_url_raw(
 					add_query_arg(
@@ -273,43 +295,87 @@ class GDPR_Requests_Public extends GDPR_Requests {
 	 * @since  1.0.0
 	 * @author Fernando Claussen <fernandoclaussen@gmail.com>
 	 */
-	public function request_confirmed() {
-		if ( ! is_front_page() || ! isset( $_GET['type'], $_GET['key'], $_GET['email'] ) ) {
+	public function request_confirmed($bypass_frontpage_check = false) {
+
+		if ( (!$bypass_frontpage_check && !is_front_page()) || ! isset( $_GET['type'], $_GET['key'], $_GET['email'] ) ) {
 			return;
 		}
-
 		$type  = sanitize_text_field( wp_unslash( $_GET['type'] ) );
 		$key   = sanitize_text_field( wp_unslash( $_GET['key'] ) );
 		$email = sanitize_email( $_GET['email'] );
 		$notification_email = sanitize_email( apply_filters( 'gdpr_admin_notification_email', get_option( 'admin_email' ) ) );
-
 		$user = get_user_by( 'email', $email );
 		if ( ! $user instanceof WP_User ) {
 			return;
 		}
-
 		$meta_key = get_user_meta( $user->ID, self::$plugin_name . "_{$type}_key", true );
 		if ( empty( $meta_key ) ) {
 			return;
 		}
-
 		if ( $key === $meta_key ) {
 			$notification_email_args = array(
 				'type' => $type,
 				'review_url' => add_query_arg( array( 'page' => 'gdpr-requests#' . $type ), admin_url() ),
 			);
+
+			/** Check if we need to send a slack notification */
+            $slack_notifications = (defined("GDPR_SLACK_ENDPOINT") ? GDPR_SLACK_ENDPOINT : get_option( 'gdpr_slack_notification', ''));
+            if (!empty($slack_notifications)) {
+
+                /** Compile the message */
+                $markdown =
+                    "New *{$type}* request received for `{$email}`. Please log into WordPress to action:".PHP_EOL.
+                    WP_SITEURL."/wp-admin/admin.php?page=";
+
+                if ($type == "export-data") {
+                    $markdown .= "gdpr-tools";
+                } else {
+                    $markdown .= "gdpr-requests#{$type}";
+                }
+
+                $data = json_encode(["text" => $markdown]);
+
+                /** Send to Slack */
+                $cURL = curl_init();
+                curl_setopt($cURL,CURLOPT_URL,$slack_notifications);
+                curl_setopt($cURL,CURLOPT_POSTFIELDS,$data);
+                curl_setopt($cURL,CURLOPT_AUTOREFERER,true);
+                curl_setopt($cURL,CURLOPT_FAILONERROR,false);
+                curl_setopt($cURL,CURLOPT_FOLLOWLOCATION,true);
+                curl_setopt($cURL,CURLOPT_RETURNTRANSFER,true);
+                curl_setopt($cURL,CURLOPT_SSL_VERIFYPEER,false);
+                curl_setopt($cURL,CURLOPT_SSL_VERIFYSTATUS,false);
+                curl_setopt($cURL, CURLOPT_HTTPHEADER, array(
+                        'Content-Type: application/json',
+                        'Content-Length: '.strlen($data))
+                );
+                curl_exec($cURL);
+            }
+
 			switch ( $type ) {
 				case 'delete':
 					$found_posts = parent::user_has_content( $user );
 					$needs_review = get_option( 'gdpr_deletion_needs_review', true );
 					if ( $found_posts || $needs_review ) {
 						parent::confirm_request( $key );
-						GDPR_Email::send( $notification_email, 'new-request', $notification_email_args );
+
+						/** Send an email confirmation, unless we've been instructed not to... */
+						if (!boolval(get_option("gdpr_deletion_skip_confirmation", false))) {
+                            GDPR_Email::send( $notification_email, 'new-request', $notification_email_args );
+                        }
 						GDPR_Audit_Log::log( $user->ID, esc_html__( 'User confirmed a request to be deleted.', 'gdpr' ) );
 						if ( $found_posts ) {
 							GDPR_Audit_Log::log( $user->ID, esc_html__( 'Content was found for that user.', 'gdpr' ) );
 						}
 						GDPR_Audit_Log::log( $user->ID, esc_html__( 'User added to the erasure review table.', 'gdpr' ) );
+
+						/**
+                         * If we're bypassing the check, chances are this is an
+                         * inline request; just return, instead of redirect
+                         */
+						if ($bypass_frontpage_check) {
+                            return;
+                        }
 						wp_safe_redirect(
 							esc_url_raw(
 								add_query_arg(
