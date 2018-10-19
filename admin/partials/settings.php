@@ -82,6 +82,16 @@
                             <?php
                             $slack_notifications = (defined("GDPR_SLACK_ENDPOINT") ? GDPR_SLACK_ENDPOINT : get_option( 'gdpr_slack_notification', '')); ?>
                             <input type="url" class="regular-text" name="gdpr_slack_notification" id="gdpr_slack_notification" value="<?php echo esc_attr( $slack_notifications ); ?>" <?php echo (defined("GDPR_SLACK_ENDPOINT") ? 'readonly="readonly"' : '') ?>>
+                            <?php if (!strlen($slack_notifications)) { ?>
+                                <p><small><strong>Slack Endpoint Setup:</strong></small></p>
+                                <small>
+                                    <ol>
+                                        <li><a href="https://api.slack.com/apps?new_app=1" target="_blank">Click here to generate a new App</a></li>
+                                        <li>Create a new <i>Incoming Webhook</i></li>
+                                        <li>Copy the <i>Endpoint</i> to the field above</li>
+                                    </ol>
+                                </small>
+                            <?php } ?>
                         </td>
                     </tr>
 				</tbody>
